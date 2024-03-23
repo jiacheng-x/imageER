@@ -7,7 +7,10 @@ Authors@R:
 Description: A packege for image processing, offering tools for edge detection 
     and denoising applicable to both grayscale and color images. It is designed 
     to analyze entire image or to slice image into smaller pieces for efficiency.
+    Methods are described in: Peihua Qiu (1998) <doi:10.1214/aos/1024691468>, (2009)
+    <doi:10.1007/s10463-007-0166-9>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
+
