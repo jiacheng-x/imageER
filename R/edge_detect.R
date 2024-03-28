@@ -1,17 +1,28 @@
 #' Function to detect edges/jumps on SQUARE image, i.e. equal width and height
 #'
-#' @param z Input image
-#' @param k Tuning parameter, size of neighborhood for edge calculation
-#' @param n Image width/height,
-#' @param beta1 Least Square estimate from LS_estimate function
-#' @param beta2 Least Square estimate from LS_estimate function
-#' @param alpha_n Parameter to adjust detection sensitivity, default 0.05
+#' @param z Input image, single channel only.
+#' @param k Tuning parameter, size of neighborhood for edge calculation.
+#' @param alpha_n Parameter to adjust detection sensitivity, default 0.05.
+#' @param h Parameter to adjust size of neighborhood during least square calculation.
 #'
 #' @return An 0, 1 matrix of edge locations with 1 being edge location
 #' @export
 #'
 #' @examples
-EdgeDectect <- function(z, k, n, beta1, beta2, alpha_n = 0.05) {
+EdgeDectect <- function(z, k, h, alpha_n = 0.05) {
+  if (k %% 2 == 0) {
+    stop("k is not odd, please ensure k is an odd number.")
+  }
+
+  if (dim(z)[1] != dim(z)[2]) {
+    stop("The image is not a square image, please use DetectionRecoverBlocking function instead.")
+  }
+
+  if (length(dim(z)) > 2){
+    stop("The image is not single channel, please use a single channel from color image or grayscale image.")
+  }
+
+  Betas <- LSEstimate (x, y, z, n, h)
   k1 <- (k + 1) / 2
   neigh <- matrix(rep(0, 4), nrow = 2)
   delta <- matrix(rep(0, n * n), nrow = n)
@@ -60,10 +71,12 @@ EdgeDectect <- function(z, k, n, beta1, beta2, alpha_n = 0.05) {
             z_temp3 <- c(z_temp3, z[i1, j1])
           }
         }
+
         delta[i, j] <- min(abs(temp1 - temp3), abs(temp2 - temp3)) / (k * k)
         var_hat <- (var(z_temp3) + var(z_temp1)) * (abs(temp1 - temp3) > abs(temp2 - temp3)) +
           (var(z_temp3) + var(z_temp2)) * (1 - (abs(temp1 - temp3) > abs(temp2 - temp3))) # use sample variance to estimate variance in threshold calculation
         threshold[i, j] <- qnorm(1 - alpha_n / 2) * sqrt(2 * var_hat) / k
+
       }
     }
   }
