@@ -4,20 +4,16 @@
 \alias{EdgeDectect}
 \title{Function to detect edges/jumps on SQUARE image, i.e. equal width and height}
 \usage{
-EdgeDectect(z, k, n, beta1, beta2, alpha_n = 0.05)
+EdgeDectect(z, k, h, alpha_n = 0.05)
 }
 \arguments{
-\item{z}{Input image}
+\item{z}{Input image, single channel only.}
 
-\item{k}{Tuning parameter, size of neighborhood for edge calculation}
+\item{k}{Tuning parameter, size of neighborhood for edge calculation.}
 
-\item{n}{Image width/height,}
+\item{h}{Parameter to adjust size of neighborhood during least square calculation.}
 
-\item{beta1}{Least Square estimate from LS_estimate function}
-
-\item{beta2}{Least Square estimate from LS_estimate function}
-
-\item{alpha_n}{Parameter to adjust detection sensitivity, default 0.05}
+\item{alpha_n}{Parameter to adjust detection sensitivity, default 0.05.}
 }
 \value{
 An 0, 1 matrix of edge locations with 1 being edge location
