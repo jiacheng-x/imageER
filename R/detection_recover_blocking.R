@@ -11,7 +11,8 @@
 #' @export
 #'
 #' @examples
-DetectionRecoverBlocking <- function(z, h, k, k1, block_size = 64) {
+detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
+  h_n = h/dim(z)[1]
   # Get dimensions
   width <- dim(z)[1]
   height <- dim(z)[2]
@@ -52,7 +53,7 @@ DetectionRecoverBlocking <- function(z, h, k, k1, block_size = 64) {
   kk <- (k + 1) / 2
   n_pad <- block_size + 2 * (kk + k)
   x <- y <- (1:n_pad) / n_pad
-  h_pad <- h * block_size / n_pad
+  h_pad <- h_n * block_size / n_pad
   p <- 0
   # Loop through the image to extract blocks
   for (i in seq(1, 1 + (n_blocks_height - 1) * non_overlap_height, length.out = n_blocks_height)) {

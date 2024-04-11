@@ -14,7 +14,7 @@
 #'
 #' @examples
 #'
-JPEstimator <- function(z, h, sigma_hat, alpha=0.05, h_n) {
+jump_preserving_estimator <- function(z, h, sigma_hat, alpha=0.05) {
   n <- dim(z)[1]
   h_n <- h/n
   z_pad <- z

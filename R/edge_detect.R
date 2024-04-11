@@ -11,7 +11,7 @@
 #' @export
 #'
 #' @examples
-EdgeDectect <- function(z, k, h, alpha_n = 0.05) {
+edge_detect <- function(z, k, h, alpha_n = 0.05) {
   if (k %% 2 == 0) {
     stop("k is not odd, please ensure k is an odd number.")
   }

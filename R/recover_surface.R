@@ -1,15 +1,16 @@
 #' Function to recover noisy surface with jump detail preserved.
 #'
-#' @param n
-#' @param kk
-#' @param z
-#' @param edge
+#' @param kk Tuning parameter, size of neighborhood for local weighted average calculation.
+#' @param z Input image, single channel only.
+#' @param edge Detected edges, should be ourput from \code{edge_detect}.
 #'
-#' @return
+#' @return A denoised image.
+#' @references
+#' Qiu, Peihua. “Discontinuous Regression Surfaces Fitting.” The Annals of Statistics 26, no. 6 (1998): 2218–45.
 #' @export
 #'
 #' @examples
-RecoverSurface <- function(z, kk, edge) {
+recover_surface <- function(z, kk, edge) {
   n <- dim(z)[1]
   kk1 <- trunc((kk + 1) / 2)
   # Upper bar
