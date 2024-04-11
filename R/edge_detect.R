@@ -1,11 +1,13 @@
 #' Function to detect edges/jumps on SQUARE image, i.e. equal width and height
 #'
 #' @param z Input image, single channel only.
-#' @param k Tuning parameter, size of neighborhood for edge calculation.
+#' @param k Tuning parameter, size of neighborhood for edge calculation, should be an odd integer.
 #' @param alpha_n Parameter to adjust detection sensitivity, default 0.05.
-#' @param h Parameter to adjust size of neighborhood during least square calculation.
+#' @param h Parameter to adjust size of neighborhood during least square calculation, should be an integer.
 #'
 #' @return An 0, 1 matrix of edge locations with 1 being edge location
+#' @references
+#' Qiu, Peihua. “Discontinuous Regression Surfaces Fitting.” The Annals of Statistics 26, no. 6 (1998): 2218–45.
 #' @export
 #'
 #' @examples
@@ -21,8 +23,13 @@ EdgeDectect <- function(z, k, h, alpha_n = 0.05) {
   if (length(dim(z)) > 2) {
     stop("The image is not single channel, please use a single channel from color image or grayscale image.")
   }
-
-  Betas <- LSEstimate(x, y, z, n, h)
+  n <- dim(z)[1]
+  x <- (1:n) / n
+  y <- (1:n) / n
+  h_n <- h/n
+  Betas <- LSEstimate(x, y, z, n, h_n)
+  beta1 <- Betas$Beta_1
+  beta2 <- Betas$Beta_2
   k1 <- (k + 1) / 2
   neigh <- matrix(rep(0, 4), nrow = 2)
   delta <- matrix(rep(0, n * n), nrow = n)
