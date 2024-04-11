@@ -18,11 +18,11 @@ EdgeDectect <- function(z, k, h, alpha_n = 0.05) {
     stop("The image is not a square image, please use DetectionRecoverBlocking function instead.")
   }
 
-  if (length(dim(z)) > 2){
+  if (length(dim(z)) > 2) {
     stop("The image is not single channel, please use a single channel from color image or grayscale image.")
   }
 
-  Betas <- LSEstimate (x, y, z, n, h)
+  Betas <- LSEstimate(x, y, z, n, h)
   k1 <- (k + 1) / 2
   neigh <- matrix(rep(0, 4), nrow = 2)
   delta <- matrix(rep(0, n * n), nrow = n)
@@ -76,7 +76,6 @@ EdgeDectect <- function(z, k, h, alpha_n = 0.05) {
         var_hat <- (var(z_temp3) + var(z_temp1)) * (abs(temp1 - temp3) > abs(temp2 - temp3)) +
           (var(z_temp3) + var(z_temp2)) * (1 - (abs(temp1 - temp3) > abs(temp2 - temp3))) # use sample variance to estimate variance in threshold calculation
         threshold[i, j] <- qnorm(1 - alpha_n / 2) * sqrt(2 * var_hat) / k
-
       }
     }
   }
