@@ -516,3 +516,18 @@ fHat <- function(x.i, y.j, n, x, y, h_n, z, u_n) {
   }
   return(f_hat)
 }
+
+###############################################################
+########## Criteria function for parameter selection###########
+###############################################################
+
+crit_func <- function(result,omega = 0.5) {
+  crit <- (1-omega)*log(result$SSEO)+omega*(result$HD_est_tm)
+  mini_k <- result$k[which.min(crit)]
+  mini_k1 <- result$k1[which.min(crit)]
+  mini_SSEO <- result$SSEO[which.min(crit)]
+  mini_HD_est_tm <- result$HD_est_tm[which.min(crit)]
+  optimal <- data.frame("Omega"=omega,"Criterion"=min(crit),"k"=mini_k,"k1"=mini_k1,
+                        "SSEO"=mini_SSEO,"HD_est_tm"=mini_HD_est_tm)
+  return(optimal)
+}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/detection_recover_blocking.R
 \name{detection_recover_blocking}
 \alias{detection_recover_blocking}
-\title{Title Function used to detect edge and denoise image with blocking capability}
+\title{Function used to detect edge and denoise image with blocking capability}
 \usage{
 detection_recover_blocking(z, h, k, k1, block_size = 64)
 }
@@ -22,4 +22,31 @@ A list of detected edges (an 0, 1 matrix of edge locations with 1 being edge loc
 }
 \description{
 Detect edges and recover images in one step, efficiently handling non-square images by dividing them into smaller blocks to speed up calculations.
+}
+\examples{
+\dontrun{
+#Generate a surface with a circular jump in the middle
+n <- 100
+x <- y <- (1:n)/n
+f <- matrix(0, n , n)
+
+for (i in 1:n){
+  for (j in 1:n){
+    if ((x[i]-0.5)^2+(y[j]-0.5)^2 > 0.25^2){
+      f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2
+    } else{
+      f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2+1
+    }
+  }
+}
+
+#Adding normal noise
+sigma <- 1/2 * sd(as.vector(f))
+set.seed(1234)
+noise <- matrix(rnorm(n*n,0,sigma), n, n)
+z <- f + noise
+
+#Detection and recover
+result = detection_recover_blocking(z, h=4, k=5, k1=5, block_size=64)
+}
 }

@@ -7,19 +7,48 @@
 jump_preserving_estimator(z, h, sigma_hat, alpha = 0.05)
 }
 \arguments{
-\item{z}{Input surface, should be single channel image}
+\item{z}{Input image, single channel only, square image only.}
 
 \item{h}{Parameter to adjust size of neighborhood for local surface estimation, should be an integer.}
 
 \item{sigma_hat}{Estimated noise level (noise variance) of input surface}
 
-\item{alpha}{Significance level to control the reconstruction performance of jump, default 0.05}
+\item{alpha}{Significance level to control the reconstruction performance of jump, default 0.05. Can be chosen from (0.5, 0.4, 0.3, 0.2, 0.15, 0.1, 0.075, 0.05, 0.025, 0.01, 0.001, 0.0001)}
 }
 \value{
 Estimated surface.
 }
 \description{
-Generate a jump-preserving surface estimator from noisy data.
+Generate a surface estimator from noisy data with jump information well preserved. This function is primarily used in \code{par_select()} to generate bootstrap sample for Hasudorff Distance estimation.
+}
+\examples{
+\dontrun{
+#Generate a surface with a circular jump in the middle
+n <- 64
+x <- y <- (1:n)/n
+f <- matrix(0, n , n)
+
+for (i in 1:n){
+  for (j in 1:n){
+    if ((x[i]-0.5)^2+(y[j]-0.5)^2 > 0.25^2){
+      f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2
+    } else{
+      f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2+1
+    }
+  }
+}
+
+#Adding normal noise
+sigma <- 1/2 * sd(as.vector(f))
+set.seed(1234)
+noise <- matrix(rnorm(n*n,0,sigma), n, n)
+z <- f + noise
+
+#Estimate sigma_hat(this is just an example, there are other ways to estimate sigma_hat)
+f_hat_int <- jump_preserving_estimator(z, h=4, sigma_hat=0, alpha=0.05)
+sigma_est <- sqrt(sum((z-f_hat_int)^2)/n^2)
+f_hat_upd <- f_hat_upd <- jump_preserving_estimator(z, h=4 ,sigma_hat=sigma_est, alpha=0.05)
+}
 }
 \references{
 Qiu, Peihua. “The Local Piecewisely Linear Kernel Smoothing Procedure for Fitting Jump Regression Surfaces.” Technometrics 46, no. 1 (February 1, 2004): 87–98. https://doi.org/10.1198/004017004000000149.

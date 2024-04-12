@@ -2,12 +2,12 @@
 % Please edit documentation in R/edge_detect.R
 \name{edge_detect}
 \alias{edge_detect}
-\title{Function to detect edges/jumps on SQUARE image, i.e. equal width and height}
+\title{Function to detect edges/jumps on SQUARE image.}
 \usage{
 edge_detect(z, k, h, alpha_n = 0.05)
 }
 \arguments{
-\item{z}{Input image, single channel only.}
+\item{z}{Input image, single channel only, square image only.}
 
 \item{k}{Tuning parameter, size of neighborhood for edge calculation, should be an odd integer.}
 
@@ -19,7 +19,34 @@ edge_detect(z, k, h, alpha_n = 0.05)
 An 0, 1 matrix of edge locations with 1 being edge location
 }
 \description{
-Function to detect edges/jumps on SQUARE image, i.e. equal width and height
+Detect edges/jumps of single channel square images (equal width and height).
+}
+\examples{
+\dontrun{
+#Generate a surface with a circular jump in the middle
+n <- 64
+x <- y <- (1:n)/n
+f <- matrix(0, n , n)
+
+for (i in 1:n){
+  for (j in 1:n){
+    if ((x[i]-0.5)^2+(y[j]-0.5)^2 > 0.25^2){
+      f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2
+    } else{
+      f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2+1
+    }
+  }
+}
+
+#Adding normal noise
+sigma <- 1/2 * sd(as.vector(f))
+set.seed(1234)
+noise <- matrix(rnorm(n*n,0,sigma), n, n)
+z <- f + noise
+
+#Detecting Edge
+edge_map <- edge_detect(z, k=5, h=4, alpha_n=0.05)
+}
 }
 \references{
 Qiu, Peihua. “Discontinuous Regression Surfaces Fitting.” The Annals of Statistics 26, no. 6 (1998): 2218–45.

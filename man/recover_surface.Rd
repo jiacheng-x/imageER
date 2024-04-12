@@ -4,11 +4,51 @@
 \alias{recover_surface}
 \title{Function to recover noisy surface with jump detail preserved.}
 \usage{
-recover_surface(z, kk, edge)
+recover_surface(z, k1, edge)
 }
 \arguments{
-\item{edge}{}
+\item{z}{Input image, single channel only, square image only.}
+
+\item{k1}{Tuning parameter, size of neighborhood for local weighted average calculation.}
+
+\item{edge}{A matrix of detected edges, should be ourput from \code{edge_detect}.}
+}
+\value{
+A denoised image.
 }
 \description{
-Function to recover noisy surface with jump detail preserved.
+Denoise single channel square images, jump/edge information will be retained instead of being blurred. Will need edge information (output of \code{edge_detect()}) as input.
+}
+\examples{
+\dontrun{
+#Generate a surface with a circular jump in the middle
+n <- 64
+x <- y <- (1:n)/n
+f <- matrix(0, n , n)
+
+for (i in 1:n){
+  for (j in 1:n){
+    if ((x[i]-0.5)^2+(y[j]-0.5)^2 > 0.25^2){
+      f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2
+    } else{
+      f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2+1
+    }
+  }
+}
+
+#Adding normal noise
+sigma <- 1/2 * sd(as.vector(f))
+set.seed(1234)
+noise <- matrix(rnorm(n*n,0,sigma), n, n)
+z <- f + noise
+
+#Detecting Edge
+edge_map <- edge_detect(z, k=5, h=4, alpha_n=0.05)
+
+#Recover/Denoise Surface
+recover_surface(z, k1=5, edge=edge_map)
+}
+}
+\references{
+Qiu, Peihua. “Discontinuous Regression Surfaces Fitting.” The Annals of Statistics 26, no. 6 (1998): 2218–45.
 }

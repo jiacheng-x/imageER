@@ -1,4 +1,4 @@
-#' Title Function used to detect edge and denoise image with blocking capability
+#' Function used to detect edge and denoise image with blocking capability
 #'
 #' Detect edges and recover images in one step, efficiently handling non-square images by dividing them into smaller blocks to speed up calculations.
 #' @param z Input image, single channel only.
@@ -11,7 +11,36 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
+#' #Generate a surface with a circular jump in the middle
+#' n <- 100
+#' x <- y <- (1:n)/n
+#' f <- matrix(0, n , n)
+#'
+#' for (i in 1:n){
+#'   for (j in 1:n){
+#'     if ((x[i]-0.5)^2+(y[j]-0.5)^2 > 0.25^2){
+#'       f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2
+#'     } else{
+#'       f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2+1
+#'     }
+#'   }
+#' }
+#'
+#' #Adding normal noise
+#' sigma <- 1/2 * sd(as.vector(f))
+#' set.seed(1234)
+#' noise <- matrix(rnorm(n*n,0,sigma), n, n)
+#' z <- f + noise
+#'
+#' #Detection and recover
+#' result = detection_recover_blocking(z, h=4, k=5, k1=5, block_size=64)
+#' }
+
 detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
+  if (length(dim(z)) > 2) {
+    stop("The image is not single channel, please use a single channel from color image or grayscale image.")
+  }
   h_n = h/dim(z)[1]
   # Get dimensions
   width <- dim(z)[1]
@@ -68,10 +97,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
         block <- z[j:(j + block_size - 1), i:(i + block_size - 1)]
         # blocks = append(blocks, list(block))
         block_pad <- BoundaryPadding(block, k)
-        ls_estimator <- LSEstimate(x, y, block_pad, n_pad, h_pad)
-        ls_beta1 <- ls_estimator$Beta_1
-        ls_beta2 <- ls_estimator$Beta_2
-        edge_temp <- EdgeDectect(block_pad, k, n_pad, ls_beta1, ls_beta2, 0.05)
+        edge_temp <- edge_detect(block_pad, k, h, 0.05)
         # record final edge matrix
         result_matrix[
           j:(j + block_size - 1 - overlap_width / 2),
@@ -89,7 +115,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
           j:(j + block_size - 1 - overlap_width / 2),
           i:(i + block_size - 1 - overlap_height / 2)
         ] <-
-          RecoverSurface(n_pad, k1, block_pad, edge_temp)[
+          recover_surface(block_pad, k1, edge_temp)[
             (1 + (kk + k)):(block_size + (kk + k)),
             (1 + (kk + k)):(block_size + (kk + k))
           ][
@@ -104,10 +130,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
         block <- z[j:(j + block_size - 1), i:(i + block_size - 1)]
         # blocks = append(blocks, list(block))
         block_pad <- BoundaryPadding(block, k)
-        ls_estimator <- LSEstimate(x, y, block_pad, n_pad, h_pad)
-        ls_beta1 <- ls_estimator$Beta_1
-        ls_beta2 <- ls_estimator$Beta_2
-        edge_temp <- EdgeDectect(block_pad, k, n_pad, ls_beta1, ls_beta2, 0.05)
+        edge_temp <- edge_detect(block_pad, k, h, 0.05)
         # record final edge matrix
         result_matrix[
           j:(j + block_size - 1 - overlap_width / 2),
@@ -125,7 +148,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
           j:(j + block_size - 1 - overlap_width / 2),
           (i + overlap_height / 2):(i + block_size - 1 - overlap_height / 2)
         ] <-
-          RecoverSurface(n_pad, k1, block_pad, edge_temp)[
+          recover_surface(block_pad, k1, edge_temp)[
             (1 + (kk + k)):(block_size + (kk + k)),
             (1 + (kk + k)):(block_size + (kk + k))
           ][
@@ -140,10 +163,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
         block <- z[j:(j + block_size - 1), i:(i + block_size - 1)]
         # blocks = append(blocks, list(block))
         block_pad <- BoundaryPadding(block, k)
-        ls_estimator <- LSEstimate(x, y, block_pad, n_pad, h_pad)
-        ls_beta1 <- ls_estimator$Beta_1
-        ls_beta2 <- ls_estimator$Beta_2
-        edge_temp <- EdgeDectect(block_pad, k, n_pad, ls_beta1, ls_beta2, 0.05)
+        edge_temp <- edge_detect(block_pad, k, h, 0.05)
         # record final edge matrix
         result_matrix[
           (j + overlap_width / 2):(j + block_size - 1 - overlap_width / 2),
@@ -161,7 +181,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
           (j + overlap_width / 2):(j + block_size - 1 - overlap_width / 2),
           i:(i + block_size - 1 - overlap_height / 2)
         ] <-
-          RecoverSurface(n_pad, k1, block_pad, edge_temp)[
+          recover_surface(block_pad, k1, edge_temp)[
             (1 + (kk + k)):(block_size + (kk + k)),
             (1 + (kk + k)):(block_size + (kk + k))
           ][
@@ -177,10 +197,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
         block <- z[j:(j + block_size - 1), i:(i + block_size - 1)]
         # blocks = append(blocks, list(block))
         block_pad <- BoundaryPadding(block, k)
-        ls_estimator <- LSEstimate(x, y, block_pad, n_pad, h_pad)
-        ls_beta1 <- ls_estimator$Beta_1
-        ls_beta2 <- ls_estimator$Beta_2
-        edge_temp <- EdgeDectect(block_pad, k, n_pad, ls_beta1, ls_beta2, 0.05)
+        edge_temp <- edge_detect(block_pad, k, h, 0.05)
         # record final edge matrix
         result_matrix[
           (j + overlap_width / 2):(j + block_size - 1 - overlap_width / 2),
@@ -198,7 +215,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
           (j + overlap_width / 2):(j + block_size - 1 - overlap_width / 2),
           (i + overlap_height / 2):(i + block_size - 1 - overlap_height / 2)
         ] <-
-          RecoverSurface(n_pad, k1, block_pad, edge_temp)[
+          recover_surface(block_pad, k1, edge_temp)[
             (1 + (kk + k)):(block_size + (kk + k)),
             (1 + (kk + k)):(block_size + (kk + k))
           ][
@@ -216,10 +233,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
       block_last_h <- z[(width - block_size + 1):width, i:(i + block_size - 1)]
       # blocks = append(blocks, list(block_last_h))
       block_pad <- BoundaryPadding(block_last_h, k)
-      ls_estimator <- LSEstimate(x, y, block_pad, n_pad, h_pad)
-      ls_beta1 <- ls_estimator$Beta_1
-      ls_beta2 <- ls_estimator$Beta_2
-      edge_temp <- EdgeDectect(block_pad, k, n_pad, ls_beta1, ls_beta2, 0.05)
+      edge_temp <- edge_detect(block_pad, k, h, 0.05)
       # record final edge matrix
       result_matrix[
         (width - block_size + overlap_width / 2 + 1):width,
@@ -237,7 +251,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
         (width - block_size + overlap_width / 2 + 1):width,
         i:(i + block_size - 1 - overlap_height / 2)
       ] <-
-        RecoverSurface(n_pad, k1, block_pad, edge_temp)[
+        recover_surface(block_pad, k1, edge_temp)[
           (1 + (kk + k)):(block_size + (kk + k)),
           (1 + (kk + k)):(block_size + (kk + k))
         ][
@@ -252,10 +266,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
       block_last_h <- z[(width - block_size + 1):width, i:(i + block_size - 1)]
       # blocks = append(blocks, list(block_last_h))
       block_pad <- BoundaryPadding(block_last_h, k)
-      ls_estimator <- LSEstimate(x, y, block_pad, n_pad, h_pad)
-      ls_beta1 <- ls_estimator$Beta_1
-      ls_beta2 <- ls_estimator$Beta_2
-      edge_temp <- EdgeDectect(block_pad, k, n_pad, ls_beta1, ls_beta2, 0.05)
+      edge_temp <- edge_detect(block_pad, k, h, 0.05)
       # record final edge matrix
       result_matrix[
         (width - block_size + overlap_width / 2 + 1):width,
@@ -273,7 +284,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
         (width - block_size + overlap_width / 2 + 1):width,
         (i + overlap_height / 2):(i + block_size - 1 - overlap_height / 2)
       ] <-
-        RecoverSurface(n_pad, k1, block_pad, edge_temp)[
+        recover_surface(block_pad, k1, edge_temp)[
           (1 + (kk + k)):(block_size + (kk + k)),
           (1 + (kk + k)):(block_size + (kk + k))
         ][
@@ -292,10 +303,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
       block <- z[j:(j + block_size - 1), (height - block_size + 1):height]
       # blocks = append(blocks, list(block))
       block_pad <- BoundaryPadding(block, k)
-      ls_estimator <- LSEstimate(x, y, block_pad, n_pad, h_pad)
-      ls_beta1 <- ls_estimator$Beta_1
-      ls_beta2 <- ls_estimator$Beta_2
-      edge_temp <- EdgeDectect(block_pad, k, n_pad, ls_beta1, ls_beta2, 0.05)
+      edge_temp <- edge_detect(block_pad, k, h, 0.05)
       # record final edge matrix
       result_matrix[
         j:(j + block_size - 1 - overlap_width / 2),
@@ -313,7 +321,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
         j:(j + block_size - 1 - overlap_width / 2),
         (height - block_size + overlap_height / 2 + 1):height
       ] <-
-        RecoverSurface(n_pad, k1, block_pad, edge_temp)[
+        recover_surface(block_pad, k1, edge_temp)[
           (1 + (kk + k)):(block_size + (kk + k)),
           (1 + (kk + k)):(block_size + (kk + k))
         ][
@@ -328,10 +336,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
       block <- z[j:(j + block_size - 1), (height - block_size + 1):height]
       # blocks = append(blocks, list(block))
       block_pad <- BoundaryPadding(block, k)
-      ls_estimator <- LSEstimate(x, y, block_pad, n_pad, h_pad)
-      ls_beta1 <- ls_estimator$Beta_1
-      ls_beta2 <- ls_estimator$Beta_2
-      edge_temp <- EdgeDectect(block_pad, k, n_pad, ls_beta1, ls_beta2, 0.05)
+      edge_temp <- edge_detect(block_pad, k, h, 0.05)
       # record final edge matrix
       result_matrix[
         (j + overlap_width / 2):(j + block_size - 1 - overlap_width / 2),
@@ -349,7 +354,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
         (j + overlap_width / 2):(j + block_size - 1 - overlap_width / 2),
         (height - block_size + overlap_height / 2 + 1):height
       ] <-
-        RecoverSurface(n_pad, k1, block_pad, edge_temp)[
+        recover_surface(block_pad, k1, edge_temp)[
           (1 + (kk + k)):(block_size + (kk + k)),
           (1 + (kk + k)):(block_size + (kk + k))
         ][
@@ -360,9 +365,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
   }
   # blocks = append(blocks, list(z[(width - block_size + 1):width, (height - block_size + 1):height]))
   block_pad <- BoundaryPadding(z[(width - block_size + 1):width, (height - block_size + 1):height], k)
-  ls_estimator <- LSEstimate(x, y, block_pad, n_pad, h_pad)
-  ls_beta1 <- ls_estimator$Beta_1
-  edge_temp <- EdgeDectect(block_pad, k, n_pad, ls_beta1, ls_beta2, 0.05)
+  edge_temp <- edge_detect(block_pad, k, h, 0.05)
   # record final edge matrix
   result_matrix[
     (width - block_size + overlap_width / 2 + 1):width,
@@ -380,7 +383,7 @@ detection_recover_blocking <- function(z, h, k, k1, block_size = 64) {
     (width - block_size + overlap_width / 2 + 1):width,
     (height - block_size + overlap_height / 2 + 1):height
   ] <-
-    RecoverSurface(n_pad, k1, block_pad, edge_temp)[
+    recover_surface(block_pad, k1, edge_temp)[
       (1 + (kk + k)):(block_size + (kk + k)),
       (1 + (kk + k)):(block_size + (kk + k))
     ][

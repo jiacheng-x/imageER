@@ -1,8 +1,10 @@
 #' Generate a jump-preserving surface estimator from noisy data.
 #'
-#' @param z Input surface, should be single channel image
+#' Generate a surface estimator from noisy data with jump information well preserved. This function is primarily used in \code{par_select()} to generate bootstrap sample for Hasudorff Distance estimation.
+#'
+#' @param z Input image, single channel only, square image only.
 #' @param sigma_hat Estimated noise level (noise variance) of input surface
-#' @param alpha Significance level to control the reconstruction performance of jump, default 0.05
+#' @param alpha Significance level to control the reconstruction performance of jump, default 0.05. Can be chosen from (0.5, 0.4, 0.3, 0.2, 0.15, 0.1, 0.075, 0.05, 0.025, 0.01, 0.001, 0.0001)
 #' @param h Parameter to adjust size of neighborhood for local surface estimation, should be an integer.
 #'
 #' @return Estimated surface.
@@ -13,8 +15,42 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
+#' #Generate a surface with a circular jump in the middle
+#' n <- 64
+#' x <- y <- (1:n)/n
+#' f <- matrix(0, n , n)
 #'
+#' for (i in 1:n){
+#'   for (j in 1:n){
+#'     if ((x[i]-0.5)^2+(y[j]-0.5)^2 > 0.25^2){
+#'       f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2
+#'     } else{
+#'       f[i,j] <- -2*(x[i]-0.5)^2-2*(y[j]-0.5)^2+1
+#'     }
+#'   }
+#' }
+#'
+#' #Adding normal noise
+#' sigma <- 1/2 * sd(as.vector(f))
+#' set.seed(1234)
+#' noise <- matrix(rnorm(n*n,0,sigma), n, n)
+#' z <- f + noise
+#'
+#' #Estimate sigma_hat(this is just an example, there are other ways to estimate sigma_hat)
+#' f_hat_int <- jump_preserving_estimator(z, h=4, sigma_hat=0, alpha=0.05)
+#' sigma_est <- sqrt(sum((z-f_hat_int)^2)/n^2)
+#' f_hat_upd <- f_hat_upd <- jump_preserving_estimator(z, h=4 ,sigma_hat=sigma_est, alpha=0.05)
+#' }
+
 jump_preserving_estimator <- function(z, h, sigma_hat, alpha=0.05) {
+  if (dim(z)[1] != dim(z)[2]) {
+    stop("The image is not a square image, please use DetectionRecoverBlocking function instead.")
+  }
+
+  if (length(dim(z)) > 2) {
+    stop("The image is not single channel, please use a single channel from color image or grayscale image.")
+  }
   n <- dim(z)[1]
   h_n <- h/n
   z_pad <- z
@@ -61,11 +97,12 @@ jump_preserving_estimator <- function(z, h, sigma_hat, alpha=0.05) {
   f_hat_pad <- z_pad
 
   h_n_pad = h_n*n/n_pad
+  u_n_upd <- u_n(sigma_hat, alpha, n_pad, h_n_pad)
 
   for (i in (h2 + 1):(n_pad - h2)) {
     for (j in (h2 + 1):(n_pad - h2)) {
       f_hat_pad[i, j] <-
-        fHat(i / n_pad, j / n_pad, n_pad, x_pad, y_pad, h_n_pad, z_pad, u_n)
+        fHat(i / n_pad, j / n_pad, n_pad, x_pad, y_pad, h_n_pad, z_pad, u_n_upd)
     }
   }
   f_hat <- f_hat_pad[(h2 + 1):(n_pad - h2), (h2 + 1):(n_pad - h2)]

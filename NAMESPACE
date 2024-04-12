@@ -3,4 +3,8 @@
 export(detection_recover_blocking)
 export(edge_detect)
 export(jump_preserving_estimator)
+export(par_select)
 export(recover_surface)
+importFrom(pracma,hausdorff_dist)
+importFrom(stats,qnorm)
+importFrom(stats,var)
